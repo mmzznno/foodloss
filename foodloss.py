@@ -1,17 +1,18 @@
-##ライブラリ
+#ライブラリ
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+import seaborn as sns
 
 #線形回帰のインポート
 from sklearn.linear_model import LinearRegression
 
 # MSEのインポート
 from sklearn.metrics import mean_squared_error
+
 # 重回帰モデルの初期設定
 lm = LinearRegression()
-
 
 # RMSE関数を作る
 def RMSE(var1, var2):
@@ -40,15 +41,32 @@ submit = pd.read_csv("../input/sample_submission.csv", header=None)
 
 
 #仮説1　気温・雨雲・相対湿度が売上に影響するのでは？
+
 #仮説2　 社内イベント時は売上が多いのでは？
-train["event"] = train.apply(lambda x: 1 if x["event"] == "キャリアアップ支援セミナー" in x["event"] else 0, axis=1)
-test["event"] = test.apply(lambda x: 1 if x["event"] == "キャリアアップ支援セミナー"  in x["event"] else 0, axis=1)
+
+# 箱ひげ図で検証
+sns.boxplot(x="y", y="event", data=train)
+
+# x軸にラベルを付けて表示
+plt.title("sales of each event content")
+plt.xlabel("sales")
+plt.show()
+
+train["event"] = train.apply(lambda x: 1 if x["event"] == "ママの会" in x["event"] else 0, axis=1)
+test["event"] = test.apply(lambda x: 1 if x["event"] == "ママの会"  in x["event"] else 0, axis=1)
 
 #仮説3　 スペシャルメニュー時は売上が多いのでは？
-train["remarks"] = train.apply(lambda x: 1 if x["remarks"] == "スペシャルメニュー（800円)" in x["remarks"] else 0, axis=1)
-test["remarks"] = test.apply(lambda x: 1 if x["remarks"] == "スペシャルメニュー（800円)"  in x["remarks"] else 0, axis=1)
 
+# 箱ひげ図で検証
+sns.boxplot(x="y", y="remarks", data=train)
 
+# x軸にラベルを付けて表示
+plt.title("sales of each remarks content")
+plt.xlabel("sales")
+plt.show()
+
+train["remarks"] = train.apply(lambda x: 1 if x["remarks"] == "お楽しみメニュー" in x["remarks"] else 0, axis=1)
+test["remarks"] = test.apply(lambda x: 1 if x["remarks"] == "お楽しみメニュー"  in x["remarks"] else 0, axis=1)
 
 
 # カラム名のリスト
@@ -61,11 +79,6 @@ train_X = train[features]
 train_y = train["y"]
 
 x_train, x_test, y_train, y_test = train_test_split(train_X, train_y, random_state=0)
-
-#train =data[data["flag"] == 1 ]
-#test = data[data["flag"] == 0]
-
-
 
 # モデルの学習
 X = x_train
@@ -90,22 +103,20 @@ test_X = test[features]
 pred2 = lm.predict(test_X)
 print(pred2)
 
-
-
 submit[1] = pred2
 submit.to_csv("submit.csv", index=False, header=False)
 
 
 #######################################################
-# RMSEの計算は省略
+# RMSEの計算
 var = RMSE(y_test, pred1)
 print(var)
 
 
-# 評価データの販売数は、変数test_yに代入されています。
-# 販売数の予測値は、変数pred1に代入されています。
+# 評価データの販売数は、変数test_yに代入
+# 販売数の予測値は、変数pred1に代入
 
-# 折れ線グラフを描画します。
+# 折れ線グラフを描画
 
 # 評価データの販売数でグラフを描く
 
@@ -113,7 +124,6 @@ print(var)
 plt.plot(y_test.values, label="actual")
 
 # 予測値でグラフを描く
-
 
 plt.plot(pred1, label="forecast")
 
