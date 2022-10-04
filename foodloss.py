@@ -39,7 +39,6 @@ submit = pd.read_csv("../input/sample_submission.csv", header=None)
 #print("x") 
 #print(train.head(20)) 
 
-
 #仮説１　曜日と売り上げの関係？ 
 #箱ひげ図で検証
 #sns.boxplot(x="y", y="week", data=train)
@@ -57,18 +56,18 @@ test = pd.concat([test, test_week], axis=1, sort =True)
 #[207 rows x 18 columns]
 #print(test.shape)
 
-#仮説２　気温・雨雲・相対湿度が売上に影響するのでは？
+#仮説0　気温・雨雲・相対湿度が売上に影響するのでは？
 #負の相関？
 x=train["temperature"]
 y=train["y"]
 plt.scatter(x, y)
 plt.show()
-#train["temperature"] = train["temperature"].apply(lambda x: 1 if x>= 25  else 2)
+#train["temperature"] = train["temperature"].apply(lambda x: 0 if x>= 25  else 1)
 
-#x=train["humidity"]
-#y=train["y"]
-#plt.scatter(x, y)
-#plt.show()
+x=train["humidity"]
+y=train["y"]
+plt.scatter(x, y)
+plt.show()
 
 #仮説1 イベントが売上に影響するのでは？
 # 箱ひげ図で検証
@@ -82,15 +81,27 @@ plt.show()
 train["event"] = train.apply(lambda x: 1 if x["event"] == "ママの会" in x["event"] else 0, axis=1)
 test["event"] = test.apply(lambda x: 1 if x["event"] == "ママの会"  in x["event"] else 0, axis=1)
 
-#仮説3　 スペシャルメニュー時は売上が多いのでは？
+#仮説3　 肉類は売上が多いのでは？
 
-# 箱ひげ図で検証
-sns.boxplot(x="y", y="remarks", data=train)
+train["kcal"] = train["kcal"].fillna(train["kcal"].median())
+test["kcal"] = test["kcal"].fillna(test["kcal"].median())
 
-# x軸にラベルを付けて表示
-plt.title("sales of each remarks content")
-plt.xlabel("sales")
-plt.show()
+train["kcal"] = train["kcal"].apply(lambda x: 1 if x> 408.5  else 0)
+test["kcal"] = test["kcal"].apply(lambda x: 1 if x> 408.5  else 0)
+print(train["kcal"])
+
+#仮説4 　給料日は外食？
+
+train["payday"] = train["payday"].fillna(0)
+test["payday"] = test["payday"].fillna(0)
+print(train["payday"])
+
+#仮説5 　雨天は外食？
+train["precipitation"] = train.apply(lambda x: 0 if x["event"] == "--" in x["precipitation"] else 1, axis=1)
+test["precipitation"] = test.apply(lambda x: 0 if x["event"] == "--"  in x["precipitation"] else 1, axis=1)
+
+print(train["precipitation"])
+
 
 #仮説1 完売プラグの影響は？
 # 箱ひげ図で検証
@@ -104,9 +115,9 @@ plt.show()
 train["remarks"] = train.apply(lambda x: 1 if x["remarks"] == "お楽しみメニュー" in x["remarks"] else 0, axis=1)
 test["remarks"] = test.apply(lambda x: 1 if x["remarks"] == "お楽しみメニュー"  in x["remarks"] else 0, axis=1)
 
-
 #カラム名のリスト
-features =["week_月","week_火","week_水","week_木","week_金","remarks","event","temperature","cloud_amount"]
+#features =["week_月","week_火","week_水","week_木","week_金","kcal","remarks","event","temperature","cloud_amount","humidity"]
+features =["week_月","week_火","week_水","week_木","week_金","kcal","precipitation","remarks","event","temperature","cloud_amount","humidity"]
 
 #学習データ（206）から分割
 #学習データの説明変数、目的変数
@@ -142,7 +153,7 @@ pred1 = lm.predict(x_test)
 # 提出用予測値(データ40）を算出
 test_X = test[features]
 pred2 = lm.predict(test_X)
-print(pred2)
+#print(pred2)
 
 submit[1] = pred2
 submit.to_csv("submit.csv", index=False, header=False)
@@ -153,13 +164,10 @@ var = RMSE(y_test, pred1)
 print(var)
 
 # 評価データの販売数は、変数test_yに代入されています。
-# 販売数の予測値は、変数pred1に代入されています。
-# 折れ線グラフを描画します。
-# 評価データの販売数でグラフを描く
+# 販売数の予測値は、変数pred1に代入
 
-#　評評価データの販売数が存在しないため以下省略
+# 折れ線グラフを描画# 評価データの販売数でグラフを描く
 plt.plot(y_test.values, label="actual")
-
 # 予測値でグラフを描く
 plt.plot(pred1, label="forecast")
 
